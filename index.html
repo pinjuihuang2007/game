@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080d12"><meta name="description" content="Taiwan ATC training simulator with a VATSYS-inspired radar control interface.">
+<title>Taiwan ATC | Radar Control Simulator</title>
+<style>
+:root{--bg:#080d12;--p:#111a22;--p2:#17232d;--edge:#2a3945;--txt:#d8e2e9;--muted:#8193a1;--green:#7dd69b;--cyan:#66c9e8;--yellow:#f0cb72;--red:#f07878;--blue:#7ca9ed}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.35 "Segoe UI",system-ui,"Noto Sans TC",sans-serif}
+button,input,select{font:inherit;color:inherit;background:#0b131a;border:1px solid var(--edge);border-radius:3px;padding:6px 8px}button{cursor:pointer}button:hover{border-color:#80b7d1}button.sel,.primary{background:#183d4b;border-color:#3c91ad}
+header{height:43px;display:flex;align-items:center;gap:12px;padding:0 12px;background:#111b24;border-bottom:1px solid #3a4b58;white-space:nowrap;overflow-x:auto}
+.logo{font-weight:800;letter-spacing:.1em;color:#f0f5f7}.logo em{font-style:normal;color:#6ccde6}.menu{color:#aab9c4}.grow{flex:1}.status{color:var(--green);font-size:11px}
+.topbtn{padding:4px 8px;font-size:11px}
+.toolbar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#0e171f;border-bottom:1px solid var(--edge);flex-wrap:wrap}
+.toolbar label{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:11px}
+.toolbar select{padding:5px 7px;font-size:12px}.toolbar button{font-size:11px;padding:5px 8px}
+main{height:calc(100vh - 88px);min-height:650px;display:grid;grid-template-columns:185px minmax(400px,1fr) 310px;grid-template-rows:minmax(350px,1fr) 190px;gap:6px;padding:6px}
+.panel{background:var(--p);border:1px solid var(--edge);min-width:0;min-height:0;overflow:hidden}
+.ph{height:27px;background:#192630;border-bottom:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.ph small{color:var(--muted);font-weight:400}.left{grid-column:1;grid-row:1;display:flex;flex-direction:column}.center{grid-column:2;grid-row:1;display:flex;flex-direction:column}.right{grid-column:3;grid-row:1 / 3;display:flex;flex-direction:column}.bottom{grid-column:1 / 3;grid-row:2;display:flex;flex-direction:column}
+.position-list{padding:6px;display:grid;gap:4px}.pos{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:7px;background:#0c151c;border:1px solid #273945;font-size:11px}.pos b{color:#e4edf2}.pos small{color:var(--muted)}.pos.active{background:#183744;border-color:#4c9eb9}
+.info{padding:8px;border-top:1px solid var(--edge);margin-top:auto;color:var(--muted);font-size:11px}.info strong{color:var(--txt)}
+.maphead{display:flex;align-items:center;gap:8px;padding:5px 8px;background:#0c151c;border-bottom:1px solid var(--edge);font-size:11px;color:var(--muted);flex-wrap:wrap}.maphead b{color:#dce9ee}
+#scope{width:100%;height:100%;min-height:0;display:block;background:#071116;flex:1}
+.mapfoot{display:flex;justify-content:space-between;gap:8px;padding:4px 8px;background:#101b23;color:var(--muted);font-size:10px}
+.filters{padding:6px;display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--edge)}.filters button{font-size:10px;padding:4px 6px}
+.listwrap{overflow:auto;flex:1}.flights{width:100%;border-collapse:collapse;font-size:10px;white-space:nowrap}.flights th{position:sticky;top:0;background:#1a2934;color:#aebdc7;text-align:left;padding:6px 4px}.flights td{padding:6px 4px;border-bottom:1px solid #26343e}.flights tr{cursor:pointer}.flights tr:hover,.flights tr.chosen{background:#183441}.tag{color:var(--cyan);font-weight:700}.muted{color:var(--muted)}
+.bottomtabs{display:flex;gap:3px;padding:4px 6px;background:#111e28;border-bottom:1px solid var(--edge)}.bottomtabs button{font-size:10px;padding:4px 9px}.bottomcontent{overflow:auto;flex:1;padding:6px}.strips{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:5px}.strip{background:#101a22;border:1px solid #344651;border-left:3px solid var(--cyan);padding:6px;font:10px/1.5 ui-monospace,monospace;cursor:pointer}.strip.arr{border-left-color:var(--yellow)}.strip b{font-size:12px;color:#e7f1f5}.strip .row{display:flex;justify-content:space-between;color:#9eb0bc}
+#messages{font:11px/1.6 ui-monospace,monospace}.msg{border-bottom:1px solid #23313b;padding:3px}.msg time{color:#8195a3;margin-right:8px}.msg.err{color:#ff9a9a}
+.rightsection{display:flex;flex-direction:column;min-height:0;border-bottom:1px solid var(--edge)}.rightsection.growsec{flex:1}.rightsection .body{padding:7px;overflow:auto}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.stat{background:#0c151c;padding:6px}.stat strong{display:block;font-size:17px}.stat span{font-size:9px;color:var(--muted)}
+.commandbox{display:grid;grid-template-columns:1fr auto;gap:5px}.commandbox input{min-width:0}.commandbox button{font-size:11px}.quick{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.quick button{font-size:10px;padding:4px 5px}.note{font-size:10px;color:var(--muted);margin-top:6px}
+.selected{font-size:11px;line-height:1.65}#alertSummary{padding:5px 6px;background:#0b151b;border:1px solid #2a3945;margin-top:6px}#alertSummary.warn{color:#f0cb72;border-color:#826c3e}#alertSummary.danger{color:#ff9999;border-color:#8a4b4b}#routeInput{font-family:ui-monospace,monospace;text-transform:uppercase}#phaseControls{margin-top:5px}#phaseControls button{flex:1 1 20%;}.selected b{color:var(--cyan)}.kv{display:grid;grid-template-columns:1fr 1fr;gap:4px}.kv div{background:#0d171f;padding:4px}
+@media(max-width:1100px) and (min-width:801px){main{grid-template-columns:165px minmax(320px,1fr);grid-template-rows:minmax(420px,1fr) 260px 210px;height:auto;min-height:calc(100vh - 88px)}.left{grid-column:1;grid-row:1}.center{grid-column:2;grid-row:1}.right{grid-column:1 / 3;grid-row:2;display:grid;grid-template-columns:190px minmax(250px,1fr) minmax(300px,1fr)}.rightsection{border-right:1px solid var(--edge);border-bottom:0}.rightsection.growsec{min-height:0}.bottom{grid-column:1 / 3;grid-row:3}}
+@media(max-width:800px){body{font-size:14px}header{height:auto;min-height:46px;flex-wrap:wrap;padding:8px 10px;gap:8px}.menu{display:none}.status{margin-left:auto}.toolbar{position:static;gap:7px;padding:8px;align-items:stretch}.toolbar label{flex:1 1 145px;justify-content:space-between}.toolbar select{max-width:62%;min-height:36px}.toolbar button{min-height:36px;flex:1 1 28%}main{height:auto;min-height:0;display:flex;flex-direction:column;padding:5px;gap:7px}.center{height:clamp(350px,62vh,510px);order:1}.left{order:2;min-height:0}.right{order:3;min-height:620px}.bottom{order:4;min-height:220px}.position-list{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.pos{min-height:40px}.maphead{gap:6px}.mapfoot{font-size:9px}.rightsection .body{padding:9px}.filters button,.bottomtabs button{min-height:34px}.bottomtabs{overflow-x:auto;white-space:nowrap}.commandbox input{min-height:40px}.commandbox button{min-width:64px}.quick button{min-height:34px}.flights{font-size:11px}.flights th,.flights td{padding:8px 6px}#scope{touch-action:pan-y}}
+@media(max-width:420px){.logo{font-size:12px}.status{font-size:10px}#utc{font-size:10px}.topbtn{padding:5px}.maphead span:nth-of-type(2),.maphead span:nth-of-type(3){display:none}.center{height:390px}.stats{grid-template-columns:repeat(3,1fr)}.stat strong{font-size:15px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">TAIWAN <em>ATC</em> / RADAR CLIENT</div>
+ <span class="menu">File　Settings　Windows　Maps　Tools　Messages　Info</span>
+ <span class="grow"></span><span id="simstatus" class="status">● SIMULATION RUNNING</span>
+ <span id="utc">UTC 00:00:00</span><button class="topbtn" id="pause">Ⅱ PAUSE</button>
+</header>
+<div class="toolbar">
+ <label>PROFILE <select id="airport"><option value="RCTP">RCTP Taoyuan</option><option value="RCKH">RCKH Kaohsiung</option><option value="RCSS">RCSS Taipei Songshan</option><option value="RCMQ">RCMQ Taichung</option><option value="TMA">Taiwan FIR / TMA</option></select></label>
+ <label>POSITION <select id="position"></select></label>
+ <label>RANGE <select id="range"><option>10 NM</option><option selected>40 NM</option><option>80 NM</option><option>150 NM</option><option>300 NM</option><option>500 NM</option></select></label>
+ <label>TRAFFIC <select id="density"><option value="low">LOW</option><option value="normal" selected>NORMAL</option><option value="high">HIGH</option></select></label>
+ <button id="spawn" class="primary">+ NEW FLIGHT</button><button id="pause2">PAUSE / RESUME</button><button id="saveScenario">SAVE SCENARIO</button><button id="loadScenarioBtn">LOAD SCENARIO</button><input id="loadScenario" type="file" accept="application/json,.json" hidden><button id="reset">RESET</button>
+</div>
+<main>
+ <section class="panel left">
+  <div class="ph">CONTROLLER POSITIONS <small>LOCAL / FIR</small></div>
+  <div class="position-list" id="poslist"></div>
+  <div class="ph">SECTOR ASSIGNMENT</div>
+  <div class="position-list" id="sectorlist"></div>
+  <div class="info"><strong>CONTROLLER:</strong> SOLO<br><strong>FREQUENCY:</strong> <span id="freq">—</span><br><strong>MODE:</strong> OFFLINE SIM<br><strong>ATIS:</strong> <span id="atis">INFO A</span></div>
+ </section>
+ <section class="panel center">
+  <div class="ph"><span id="scopeTitle">AIR SITUATION DISPLAY — RCTP</span><small id="scopeMode">RADAR / MAP</small></div>
+  <div class="maphead"><b id="scopePos">RCTP_GND</b><span>SSR: ON</span><span>LABELS: ON</span><span>VECTORS: 2 MIN</span><span>RANGE: <b id="rangeText">40 NM</b></span><span class="grow"></span><span id="targetCount">0 TRACKS</span></div>
+  <canvas id="scope" width="1100" height="700"></canvas>
+  <div class="mapfoot"><span>SIMULATED DATA · NOT FOR NAVIGATION</span><span id="mousepos">CURSOR —</span><span>MAP: SCHEMATIC · DRAG TARGET / WHEEL ZOOM · ALERTS ARE ILLUSTRATIVE</span></div>
+ </section>
+ <section class="panel right">
+  <div class="rightsection">
+   <div class="ph">TRAFFIC SUMMARY <small>LIVE</small></div>
+   <div class="body"><div class="stats"><div class="stat"><strong id="nall">0</strong><span>TOTAL</span></div><div class="stat"><strong id="ndep">0</strong><span>DEP</span></div><div class="stat"><strong id="narr">0</strong><span>ARR</span></div></div><div id="alertSummary" class="note" aria-live="polite">PROXIMITY CHECK: NO ALERTS</div></div>
+  </div>
+  <div class="rightsection growsec">
+   <div class="ph">SECTOR TRAFFIC <small id="sectorCount">0 TRACKS</small></div>
+   <div class="filters"><button class="sel" data-filter="ALL">ALL</button><button data-filter="DEP">DEP</button><button data-filter="ARR">ARR</button><button data-filter="GROUND">GROUND</button></div>
+   <div class="listwrap"><table class="flights"><thead><tr><th>CALLSIGN</th><th>TYPE</th><th>ALT</th><th>SPD</th><th>HDG</th></tr></thead><tbody id="flightrows"></tbody></table></div>
+  </div>
+  <div class="rightsection" style="min-height:215px">
+   <div class="ph">FLIGHT DATA / COMMAND <small id="selid">NO SELECTION</small></div>
+   <div class="body">
+    <div id="flightdata" class="selected muted">Select a radar target or flight list row.</div>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted)">ROUTE EDITOR <span style="float:right">DEMO ROUTE ONLY</span></div><div class="commandbox" style="margin-top:4px"><input id="routeInput" placeholder="例：RCTP DCT FIX DCT RJAA"><button id="applyRoute">APPLY</button></div><div class="quick" id="phaseControls"><button data-phasecmd="CLEARED">CLEAR</button><button data-phasecmd="PUSHBACK">PUSH</button><button data-phasecmd="TAXI">TAXI</button><button data-phasecmd="HOLD SHORT">HOLD</button><button data-phasecmd="LINE UP">LINE UP</button><button data-phasecmd="TAKEOFF">TAKEOFF</button><button data-phasecmd="APPROACH">APP</button><button data-phasecmd="LAND">LAND</button></div><div class="commandbox" style="margin-top:7px"><input id="command" placeholder="呼號 + 指令 / callsign + instruction"><button id="send" class="primary">SEND</button></div>
+    <div class="quick"><button data-cmd="CONTACT GROUND">GND</button><button data-cmd="CONTACT TOWER">TWR</button><button data-cmd="CONTACT APPROACH">APP</button><button data-cmd="CONTACT CTR">CTR</button><button id="voice">🎙 VOICE</button><button id="cmdhelp">HELP</button></div>
+    <div class="note">語音辨識支援度依瀏覽器而異。可用中文或英文輸入指令。若在聊天 App 預覽中按鈕無反應，請下載後用 Safari／Chrome 開啟。</div>
+   </div>
+  </div>
+ </section>
+ <section class="panel bottom">
+  <div class="bottomtabs"><button class="sel" data-tab="strips">FLIGHT PROGRESS STRIPS</button><button data-tab="messages">ATC MESSAGES</button><button data-tab="coord">COORDINATION</button><span class="grow"></span><small class="muted">SIM TIME / <span id="simtime">00:00:00</span></small></div>
+  <div class="bottomcontent" id="tabcontent"><div id="strips" class="strips"></div></div>
+ </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const db={
+ RCTP:{zh:"桃園國際機場",name:"TAOYUAN",rwy:["05L","05R","23L","23R"],stands:["A01","A02","A03","B01","B02","B03","C01","C02","D01"],taxi:["A","B","C","D","E","N"],airlines:[["EVA","長榮航空"],["CAL","中華航空"],["SJX","星宇航空"],["CPA","國泰航空"],["ANA","全日空"],["JAL","日本航空"],["UAL","聯合航空"],["SCO","酷航"]],types:["A321","A320","B738","B789","A359","B77W","A333"],freq:{DEL:"121.800",GND:"121.900",TWR:"118.700",APP:"119.700",CTR:"124.200"}},
+ RCKH:{zh:"高雄國際機場",name:"KAOHSIUNG",rwy:["09","27"],stands:["01","02","03","04","05","06"],taxi:["A","B","C","D"],airlines:[["CAL","中華航空"],["EVA","長榮航空"],["MDA","華信航空"],["UIA","立榮航空"],["VJC","越捷航空"],["HKE","香港快運"]],types:["A321","A320","B738","ATR72","A333","B789"],freq:{DEL:"121.700",GND:"121.900",TWR:"118.700",APP:"119.500",CTR:"124.200"}},
+ RCSS:{zh:"臺北松山機場",name:"TAIPEI SONGSHAN",rwy:["10","28"],stands:["01","02","03","04","05"],taxi:["A","B","C"],airlines:[["UIA","立榮航空"],["MDA","華信航空"],["CES","中國東方航空"],["CSH","上海航空"],["CXA","廈門航空"]],types:["A321","A320","B738","E190","A333"],freq:{DEL:"121.700",GND:"121.900",TWR:"118.100",APP:"119.700",CTR:"124.200"}},
+ RCMQ:{zh:"臺中國際機場",name:"TAICHUNG",rwy:["18","36"],stands:["01","02","03","04"],taxi:["A","B","C"],airlines:[["MDA","華信航空"],["UIA","立榮航空"],["SJX","星宇航空"],["VJC","越捷航空"],["TWB","德威航空"]],types:["A321","A320","ATR72","B738"],freq:{DEL:"121.700",GND:"121.900",TWR:"118.100",APP:"119.500",CTR:"124.200"}},
+ TMA:{zh:"臺北 FIR / TMA",name:"TAIWAN FIR",rwy:[],stands:[],taxi:[],airlines:[["EVA","長榮航空"],["CAL","中華航空"],["SJX","星宇航空"],["CPA","國泰航空"],["ANA","全日空"],["JAL","日本航空"],["VJC","越捷航空"]],types:["A321","A320","B738","B789","A359","B77W"],freq:{CTR:"124.200",APP:"119.700"}}
+};
+const positions=[
+ {id:"DEL",label:"DELIVERY",scope:"AD",freq:"DEL"},{id:"GND",label:"GROUND",scope:"AD",freq:"GND"},{id:"TWR",label:"TOWER",scope:"AD",freq:"TWR"},{id:"APP",label:"APPROACH",scope:"TMA",freq:"APP"},{id:"CTR",label:"CENTRE / CTR",scope:"FIR",freq:"CTR"}
+];
+let flights=[],selected=null,paused=false,seconds=8*3600,lastAuto=0,filter="ALL",tab="strips",messages=[],idSeq=1;
+let sectorsOn=new Set(["LOCAL","TMA","FIR"]),mapCanvas=$("scope"),ctx=mapCanvas.getContext("2d");
+const rand=a=>a[Math.floor(Math.random()*a.length)],airport=()=>$("airport").value,profile=()=>db[airport()],pos=()=>$("position").value;
+function clock(){let h=Math.floor(seconds/3600)%24,m=Math.floor(seconds%3600/60),s=seconds%60;return [h,m,s].map(n=>String(n).padStart(2,"0")).join(":")}
+function say(t,err=false){messages.unshift({t,err,time:clock()});messages=messages.slice(0,160);if(tab==="messages")drawTab()}
+function currentFreq(){let p=pos();return profile().freq[p]||profile().freq.CTR||"—"}
+function availablePositions(){return positions.filter(p=>airport()==="TMA"?p.id==="CTR"||p.id==="APP":true)}
+function setPositions(){let list=availablePositions();$("position").innerHTML=list.map(p=>`<option value="${p.id}">${p.id} — ${p.label}</option>`).join("");$("position").value=airport()==="TMA"?"CTR":"GND";drawPositions()}
+function drawPositions(){$("poslist").innerHTML=availablePositions().map(p=>`<button class="pos ${pos()===p.id?"active":""}" data-pos="${p.id}"><b>${p.id} — ${p.label}</b><small>${p.scope}</small></button>`).join("");document.querySelectorAll("[data-pos]").forEach(b=>b.onclick=()=>{$("position").value=b.dataset.pos;changePosition()});$("sectorlist").innerHTML=[["LOCAL","Aerodrome"],["TMA","Terminal"],["FIR","En-route FIR"]].map(([id,n])=>`<button class="pos ${sectorsOn.has(id)?"active":""}" data-sector="${id}"><b>${n}</b><small>${sectorsOn.has(id)?"ON":"OFF"}</small></button>`).join("");document.querySelectorAll("[data-sector]").forEach(b=>b.onclick=()=>{let s=b.dataset.sector;sectorsOn.has(s)?sectorsOn.delete(s):sectorsOn.add(s);drawPositions();draw()})}
+function changePosition(){let p=pos();$("freq").textContent=currentFreq();$("scopePos").textContent=airport()+"_"+p;$("scopeTitle").textContent=(airport()==="TMA"?"TAIWAN FIR":"AIR SITUATION DISPLAY — "+airport())+" / "+p;drawPositions();draw()}
+function createFlight(){
+ if(flights.length>45){say("Traffic generator limit reached.");return}
+ let a=profile(),isDep=airport()!=="TMA"&&Math.random()<.53,al=rand(a.airlines),cs=al[0]+" "+(100+Math.floor(Math.random()*8900)),rwy=rand(a.rwy.length?a.rwy:["05L"]),from=rand(["RJAA","RJTT","VHHH","RKSI","WSSS","RPLL","ZSPD","RCTP"]),to=airport()==="TMA"?rand(["RCTP","RCKH","RCSS","RCMQ"]):rand(["RJAA","VHHH","RKSI","WSSS","RPLL","ZSPD"]);
+ let f={id:idSeq++,cs,airline:al[1],type:rand(a.types),dep:isDep,phase:isDep?"PARKED":"ENROUTE",stand:rand(a.stands.length?a.stands:["—"]),rwy,from:isDep?airport():from,to:isDep?to:airport(),route:[isDep?airport():from,"DCT",isDep?to:airport()].join(" "),sid:"SID-"+rand(["A","B","C"]),star:"STAR-"+rand(["N","S","E"]),squawk:String(1000+Math.floor(Math.random()*7000)),alt:isDep?0:Math.floor(120+Math.random()*180)*100,speed:isDep?0:Math.floor(230+Math.random()*90),hdg:Math.floor(Math.random()*360),x:isDep?260+Math.random()*80:750+Math.random()*180,y:isDep?500+Math.random()*90:90+Math.random()*150,cleared:false,age:0,owner:isDep?"GND":"CTR",history:[],level:Math.floor(100+Math.random()*250)*100};
+ flights.push(f);say(`${cs} ${f.type} ${isDep?"DEP":"ARR"} FDR CREATED · ${f.from} → ${f.to}`);render();
+}
+function selectedFlight(){return flights.find(f=>f.id===selected)}
+function selectFlight(id){selected=Number(id);let f=selectedFlight();if(f){$("command").value=f.cs+" ";if(window.matchMedia("(max-width: 800px)").matches){$("flightdata").scrollIntoView({behavior:"smooth",block:"nearest"})}}render()}
+
+function getProximityAlerts(){
+ const alerts=[];
+ for(let i=0;i<flights.length;i++)for(let j=i+1;j<flights.length;j++){
+  const a=flights[i],b=flights[j];
+  if(["LANDED","CANCELLED"].includes(a.phase)||["LANDED","CANCELLED"].includes(b.phase))continue;
+  const d=Math.hypot(a.x-b.x,a.y-b.y);
+  // Screen-space proximity warning for this toy simulation only; not a real separation calculation.
+  if(d<58)alerts.push({a,b,d});
+ }
+ return alerts.sort((x,y)=>x.d-y.d);
+}
+function updateAlertSummary(){
+ const el=$("alertSummary");if(!el)return;
+ const a=getProximityAlerts();
+ el.className="note"+(a.length?" warn":"");
+ el.textContent=a.length?`SIM PROXIMITY WARNING: ${a.length} close target pair(s) · NOT REAL SEPARATION ALERT`:"PROXIMITY CHECK: NO SIMULATED CLOSE PAIRS";
+}
+function saveScenario(){
+ const data={format:"TaiwanATCScenario",version:"0.5",airport:airport(),position:pos(),seconds,flights:flights.map(f=>({...f,history:[]})),messages};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=`taiwan-atc-${airport().toLowerCase()}-scenario.json`;a.click();
+ URL.revokeObjectURL(url);say("Scenario exported as JSON.");
+}
+function loadScenarioFile(file){
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(reader.result);
+   if(data.format!=="TaiwanATCScenario"||!Array.isArray(data.flights))throw new Error("Invalid scenario file");
+   if(!db[data.airport])throw new Error("Unknown airport profile");
+   $("airport").value=data.airport;setPositions();
+   if(availablePositions().some(p=>p.id===data.position))$("position").value=data.position;
+   flights=data.flights.slice(0,60).map(f=>({...f,history:[]}));selected=null;
+   seconds=Number.isFinite(data.seconds)?data.seconds:seconds;
+   messages=Array.isArray(data.messages)?data.messages.slice(-160):[];
+   changePosition();render();drawTab();say("Scenario imported: "+flights.length+" demo flight(s).");
+  }catch(e){say("Could not load scenario: "+e.message,true)}
+ };
+ reader.readAsText(file);
+}
+function applyRoute(){
+ const f=selectedFlight();if(!f){say("Select a flight before editing its route.",true);return}
+ const route=$("routeInput").value.trim().toUpperCase();
+ if(!/^[A-Z0-9][A-Z0-9 .\\/-]{2,118}$/.test(route)){say("Route format invalid. Use airport / FIX identifiers separated by spaces.",true);return}
+ f.route=route;say(`${f.cs} route updated: ${route} (training annotation).`);render();
+}
+
+function render(){
+ let deps=flights.filter(f=>f.dep).length,arrs=flights.length-deps;$("nall").textContent=flights.length;$("ndep").textContent=deps;$("narr").textContent=arrs;$("targetCount").textContent=flights.length+" TRACKS";$("sectorCount").textContent=flights.length+" TRACKS";
+ $("flightrows").innerHTML=flights.filter(f=>filter==="ALL"||(filter==="DEP"&&f.dep)||(filter==="ARR"&&!f.dep)||(filter==="GROUND"&&["PARKED","PUSHBACK","TAXI","HOLD SHORT","LANDED"].includes(f.phase))).map(f=>`<tr class="${f.id===selected?"chosen":""}" data-flight="${f.id}"><td class="tag">${f.cs}</td><td>${f.type}</td><td>${f.alt?Math.round(f.alt/100):"GND"}</td><td>${f.speed}</td><td>${String(f.hdg).padStart(3,"0")}</td></tr>`).join("");
+ document.querySelectorAll("[data-flight]").forEach(r=>r.onclick=()=>selectFlight(r.dataset.flight));
+ if($("strips"))$("strips").innerHTML=flights.map(f=>`<div class="strip ${f.dep?"":"arr"}" onclick="selectFlight(${f.id})"><div class="row"><b>${f.cs}</b><span>${f.type} / ${f.squawk}</span></div><div>${f.from} → ${f.to}　${f.phase}</div><div>SID ${f.sid}　STAR ${f.star}</div><div class="row"><span>ALT ${f.alt||"GND"} FT</span><span>HDG ${f.hdg}° / ${f.speed} KT</span></div></div>`).join("")||'<span class="muted">No active flight plans.</span>';
+ let f=selectedFlight();$("selid").textContent=f?f.cs:"NO SELECTION";if($("routeInput"))$("routeInput").value=f?f.route:"";$("flightdata").innerHTML=f?`<b>${f.cs}</b> · ${f.airline}<div class="kv"><div>TYPE <b>${f.type}</b></div><div>SSR <b>${f.squawk}</b></div><div>FROM <b>${f.from}</b></div><div>TO <b>${f.to}</b></div><div>ALT <b>${f.alt} FT</b></div><div>SPD <b>${f.speed} KT</b></div><div>HDG <b>${f.hdg}°</b></div><div>OWNER <b>${f.owner}</b></div></div><div>PHASE: <b>${f.phase}</b></div><div>SID: ${f.sid} · STAR: ${f.star}</div><div>ROUTE: ${f.route}</div>`:'Select a radar target or flight list row.';
+ updateAlertSummary();draw();
+}
+function drawTaiwan(){
+ // stylised Taiwan island silhouette, intentionally not a navigation chart
+ ctx.fillStyle="#142c2c";ctx.strokeStyle="#54736b";ctx.lineWidth=2;ctx.beginPath();let pts=[[535,85],[570,120],[584,165],[570,210],[555,260],[532,320],[515,380],[490,438],[460,480],[430,510],[410,490],[420,450],[435,405],[448,360],[462,310],[478,260],[490,210],[500,160],[515,115]];pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle="#78978c";ctx.font="14px monospace";ctx.fillText("TAIWAN FIR",45,42);ctx.fillText("TAIPEI",530,95);ctx.fillText("TAICHUNG",470,285);ctx.fillText("KAOHSIUNG",390,440);
+ // FIR and TMA outlines
+ ctx.strokeStyle="#41677a";ctx.setLineDash([9,7]);ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(500,300,380,270,0,0,Math.PI*2);ctx.stroke();ctx.strokeStyle="#8d784e";ctx.beginPath();ctx.ellipse(500,170,125,95,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+ let airports={RCTP:[535,125],RCSS:[540,155],RCMQ:[480,275],RCKH:[405,435]};Object.entries(airports).forEach(([k,p])=>{ctx.fillStyle="#e0d28d";ctx.fillRect(p[0]-3,p[1]-3,6,6);ctx.fillStyle="#a9c1ca";ctx.font="12px monospace";ctx.fillText(k,p[0]+8,p[1]-7)});
+}
+function drawAirport(){
+ let cx=550,cy=355;ctx.fillStyle="#1c3229";ctx.fillRect(60,55,980,570);
+ ctx.strokeStyle="#6d7f6d";ctx.lineWidth=6;ctx.setLineDash([12,10]);[[210,185,460,185],[460,185,460,325],[660,385,880,385],[880,385,880,520],[190,510,430,510],[430,510,430,390]].forEach(p=>{ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(p[2],p[3]);ctx.stroke()});ctx.setLineDash([]);
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(airport()==="RCKH"?-.07:airport()==="RCSS"?.1:0);ctx.fillStyle="#4c5961";ctx.fillRect(-380,-28,760,56);ctx.strokeStyle="#e5e9e9";ctx.lineWidth=2;ctx.setLineDash([22,18]);ctx.beginPath();ctx.moveTo(-355,0);ctx.lineTo(355,0);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle="#fff";ctx.font="bold 17px monospace";ctx.fillText(profile().rwy[0]||"RWY",-420,5);ctx.fillText(profile().rwy.at(-1)||"",385,5);ctx.restore();
+ ctx.fillStyle="#9ab39d";ctx.font="13px monospace";ctx.fillText("APRON / STANDS",100,120);ctx.fillText("TAXIWAY NETWORK (SCHEMATIC)",690,555);
+}
+function draw(){
+ let w=mapCanvas.width,h=mapCanvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#071116";ctx.fillRect(0,0,w,h);ctx.save();ctx.translate(w/2+panX,h/2+panY);ctx.scale(zoom,zoom);ctx.translate(-w/2,-h/2);
+ ctx.strokeStyle="#102630";ctx.lineWidth=1;for(let x=0;x<w;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+ if(airport()==="TMA"||pos()==="CTR"||pos()==="APP")drawTaiwan();else drawAirport();
+ flights.forEach(f=>{ctx.save();ctx.translate(f.x,f.y);ctx.rotate((f.hdg-90)*Math.PI/180);ctx.fillStyle=f.id===selected?"#ffffff":f.dep?"#67c9e9":"#f0ce79";ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-7,-5);ctx.lineTo(-4,0);ctx.lineTo(-7,5);ctx.closePath();ctx.fill();ctx.restore();ctx.fillStyle=f.id===selected?"#fff":f.dep?"#8bd8ef":"#f5d98c";ctx.font="bold 13px monospace";ctx.fillText(f.cs,f.x+13,f.y-8);ctx.font="11px monospace";ctx.fillText(`${Math.round(f.alt/100)} · ${f.speed} · ${String(f.hdg).padStart(3,"0")}`,f.x+13,f.y+7);if(f.history.length>1){ctx.strokeStyle="#557d8b";ctx.beginPath();f.history.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke()}});ctx.restore();$("zoomLabel").textContent=zoom.toFixed(1)+"×";
+}
+function drawTab(){let el=$("tabcontent");if(tab==="strips"){el.innerHTML='<div id="strips" class="strips"></div>';render()}else if(tab==="messages"){el.innerHTML='<div id="messages">'+messages.map(m=>`<div class="msg ${m.err?"err":""}"><time>${m.time}</time>${m.t}</div>`).join("")+'</div>'}else{el.innerHTML='<div id="messages"><div class="msg">COORDINATION / HANDOFF QUEUE</div>'+flights.map(f=>`<div class="msg">${f.cs} · ${f.owner} · ${f.phase} <button onclick="handoff(${f.id})">ACCEPT / HANDOFF</button></div>`).join("")+'</div>'}}
+window.handoff=id=>{let f=flights.find(x=>x.id===id);if(!f)return;f.owner=pos();say(`${f.cs} coordination accepted by ${pos()}.`);render();drawTab()};
+function issue(raw){
+ let s=raw.trim(),u=s.toUpperCase();if(!s)return;
+ if(/HELP|指令範例/.test(u)){say("COMMANDS: [CALLSIGN] CLEARED / 放行；PUSHBACK / 推出；TAXI VIA A TO RWY 05L / 滑行；LINE UP AND WAIT / 進跑道等待；CLEARED FOR TAKEOFF / 起飛；HEADING 270；CLIMB FL250；DESCEND 5000；SPEED 210；DIRECT FIX；CONTACT TOWER / 移交；CLEARED TO LAND / 降落。先選對席位。");return}
+ if(/NEW FLIGHT|生成航班/.test(u)){createFlight();return}
+ let f=flights.find(x=>u.includes(x.cs))||selectedFlight();if(!f){say("No matching callsign. Select a flight or include its full callsign.",true);return}
+ let p=pos(),msg="",ok=false;
+ if((/CLEARED|放行/.test(u))&&p==="DEL"){f.cleared=true;f.phase="CLEARED";f.owner="GND";msg=`${f.cs}: clearance issued. ${f.sid}, route ${f.route}, squawk ${f.squawk}.`;ok=true}
+ else if((/PUSHBACK|推出/.test(u))&&p==="GND"){if(!f.dep||!f.cleared)msg="Pushback unavailable: departure flight must have clearance.";else{f.phase="PUSHBACK";f.owner="GND";msg=f.cs+" pushback approved.";ok=true}}
+ else if((/TAXI|滑行/.test(u))&&p==="GND"){if(!f.dep||!f.cleared)msg="Taxi unavailable: check flight type and clearance.";else{f.phase="TAXI";f.owner="GND";f.x=330;f.y=500;msg=`${f.cs} taxi via ${profile().taxi[0]||"A"} to holding point runway ${f.rwy} (schematic).`;ok=true}}
+ else if((/LINE UP|進跑道|跑道等待/.test(u))&&p==="TWR"){if(f.phase!=="TAXI"&&f.phase!=="HOLD SHORT")msg="Aircraft is not at the runway holding point.";else{f.phase="LINE UP";f.owner="TWR";msg=f.cs+" line up and wait runway "+f.rwy+".";ok=true}}
+ else if((/TAKEOFF|起飛/.test(u))&&p==="TWR"){if(!["TAXI","HOLD SHORT","LINE UP"].includes(f.phase))msg="Aircraft not ready at runway.";else{f.phase="AIRBORNE";f.owner="APP";f.alt=1500;f.speed=180;f.x+=35;f.y-=80;msg=f.cs+" cleared for takeoff runway "+f.rwy+".";ok=true}}
+ else if((/CLEARED TO LAND|降落許可|降落/.test(u))&&p==="TWR"){if(f.dep)msg="Departure flight cannot receive landing clearance.";else{f.phase="LANDING";f.owner="TWR";f.alt=0;f.speed=145;msg=f.cs+" cleared to land runway "+f.rwy+" (sim).";ok=true}}
+ else if((/APPROACH|進場|STAR/.test(u))&&p==="APP"){if(f.dep)msg="This is a departure flight.";else{f.phase="APPROACH";f.owner="APP";f.alt=3000;f.speed=190;msg=f.cs+" cleared approach via "+f.star+" (procedure label illustrative).";ok=true}}
+ else if(/HEADING|航向/.test(u)){let n=u.match(/(?:HEADING|航向)\s*(\d{1,3})/);if(n){f.hdg=Number(n[1])%360;msg=f.cs+" heading set "+f.hdg+" degrees.";ok=true}}
+ else if(/CLIMB|上升/.test(u)){let n=u.match(/(?:FL|CLIMB|上升)\s*(\d{2,3})/);if(n){f.alt=Number(n[1])*(u.includes("FL")?100:100);msg=f.cs+" climb altitude set "+f.alt+" ft.";ok=true}}
+ else if(/DESCEND|下降/.test(u)){let n=u.match(/(?:DESCEND|下降)\s*(\d{3,5})/);if(n){f.alt=Number(n[1]);msg=f.cs+" descend altitude set "+f.alt+" ft.";ok=true}}
+ else if(/SPEED|速度/.test(u)){let n=u.match(/(?:SPEED|速度)\s*(\d{2,3})/);if(n){f.speed=Number(n[1]);msg=f.cs+" speed set "+f.speed+" knots.";ok=true}}
+ else if(/CONTACT|移交|HAND.?OFF/.test(u)){let target=/CTR/.test(u)?"CTR":/APP|APPROACH/.test(u)?"APP":/TOWER|TWR/.test(u)?"TWR":/GROUND|GND/.test(u)?"GND":"";if(target){f.owner=target;msg=f.cs+" contact "+target+"; handoff recorded.";ok=true}}
+ else if(/DIRECT|直飛/.test(u)){let m=s.split(/DIRECT|直飛/i).pop().trim();f.route+=" → "+m;msg=f.cs+" direct "+m+" (route annotation).";ok=true}
+ else msg="Command not available at "+p+". Type HELP for examples.";
+ say(msg,!ok);$("command").value="";render();
+}
+$("send").onclick=()=>issue($("command").value);
+$("applyRoute").onclick=applyRoute;
+$("routeInput").addEventListener("keydown",e=>{if(e.key==="Enter")applyRoute()});
+$("saveScenario").onclick=saveScenario;
+$("loadScenarioBtn").onclick=()=>$("loadScenario").click();
+$("loadScenario").onchange=e=>{loadScenarioFile(e.target.files[0]);e.target.value=""};
+document.querySelectorAll("[data-phasecmd]").forEach(b=>b.onclick=()=>{
+ const f=selectedFlight();if(!f){say("Select a flight first.",true);return}
+ const cmd=b.dataset.phasecmd;
+ const phrase={CLEARED:"CLEARED",PUSHBACK:"PUSHBACK",TAXI:"TAXI", "HOLD SHORT":"HOLD SHORT","LINE UP":"LINE UP AND WAIT",TAKEOFF:"CLEARED FOR TAKEOFF",APPROACH:"APPROACH",LAND:"CLEARED TO LAND"}[cmd];
+ issue(f.cs+" "+phrase);
+});
+$("command").addEventListener("keydown",e=>{if(e.key==="Enter")issue(e.target.value)});$("cmdhelp").onclick=()=>issue("HELP");
+document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>issue((selectedFlight()?.cs||"")+ " "+b.dataset.cmd));
+document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("sel",x===b));render()});
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("sel",x===b));drawTab()});
+$("position").onchange=changePosition;$("airport").onchange=()=>{flights=[];selected=null;setPositions();changePosition();say("Profile loaded: "+profile().zh+" (schematic training profile; not operational data).");render();drawTab()};
+$("range").onchange=()=>$("rangeText").textContent=$("range").value;
+function togglePause(){paused=!paused;$("pause").textContent=paused?"▶ RESUME":"Ⅱ PAUSE";$("simstatus").textContent=paused?"Ⅱ SIMULATION PAUSED":"● SIMULATION RUNNING";$("simstatus").style.color=paused?"#f0cb72":"#7dd69b"}
+$("pause").onclick=togglePause;$("pause2").onclick=togglePause;$("reset").onclick=()=>{flights=[];selected=null;seconds=8*3600;messages=[];say("Simulation reset.");render();drawTab()};
+$("spawn").onclick=createFlight;
+$("voice").onclick=()=>{let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){say("Speech recognition is not supported by this browser.",true);return}let r=new SR();r.lang="zh-TW";r.onstart=()=>$("voice").textContent="聆聽中";r.onresult=e=>{let t=e.results[0][0].transcript;$("command").value=t;issue(t)};r.onerror=()=>say("Voice recognition failed.",true);r.onend=()=>$("voice").textContent="🎙 VOICE";r.start()};
+mapCanvas.addEventListener("mousemove",e=>{let r=mapCanvas.getBoundingClientRect();$("mousepos").textContent=`CURSOR ${Math.round((e.clientX-r.left)/r.width*mapCanvas.width)} / ${Math.round((e.clientY-r.top)/r.height*mapCanvas.height)}`});
+mapCanvas.addEventListener("click",e=>{let r=mapCanvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*mapCanvas.width,y=(e.clientY-r.top)/r.height*mapCanvas.height;let f=flights.sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];if(f&&Math.hypot(f.x-x,f.y-y)<45)selectFlight(f.id)});
+function tick(){if(!paused){seconds++;flights.forEach(f=>{f.history.push([f.x,f.y]);if(f.history.length>12)f.history.shift();if(f.phase==="AIRBORNE"||f.phase==="ENROUTE"||f.phase==="APPROACH"){f.x+=Math.cos(f.hdg*Math.PI/180)*.55;f.y-=Math.sin(f.hdg*Math.PI/180)*.55;if(f.phase==="AIRBORNE")f.alt=Math.min(f.alt+80,12000)}if(f.phase==="LANDING"){f.x-=.4;f.y+=.5;if(f.y>360){f.phase="LANDED";f.owner="GND";say(f.cs+" landed; Ground control required.")}}});let gap=$("density").value==="high"?100:$("density").value==="normal"?210:420;if(seconds-lastAuto>gap&&flights.length<35){createFlight();lastAuto=seconds}render()}$("utc").textContent="UTC "+clock();$("simtime").textContent=clock()}
+setPositions();changePosition();for(let i=0;i<7;i++)createFlight();updateAlertSummary();setInterval(tick,1000);say("Welcome to Taiwan ATC Simulator v0.5. Training simulation only.");
+</script>
+</body></html>
